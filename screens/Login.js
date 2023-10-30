@@ -13,8 +13,8 @@ import {
     StatusBar,
     Dimensions 
 } from 'react-native';
-import firebase from 'firebase';
-import db from '../config';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../config';
 
 const background = require('../assets/background.png');
 const logo = require('../assets/logo.png');
@@ -28,16 +28,17 @@ export default class Login extends Component{
         };
     }
 
-    handleLogin = (email, password) => {
-      firebase.auth()
-      .signInWithEmailAndPassword(email, password)
-      .then(()=>{
-        this.props.navigation.navigate("Home");
-      })
-      .catch(err => {
-        Alert.alert(err.message);
-      })
-    }
+    handleLogin = () => {
+        const { email, password } = this.state;
+
+        signInWithEmailAndPassword(auth, email, password)
+        .then(() => {
+          this.props.navigation.navigate("Home");
+        })
+        .catch(err => {
+          console.log(err.message);
+        });
+    };
 
     render(){
         return(
@@ -61,17 +62,18 @@ export default class Login extends Component{
                       style={styles.textInput}
                       placeholder='Insira sua senha'
                       placeholderTextColor='#5C5C5C'
-                      keyboardType='password'
                       onChangeText={text => this.setState({password: text})}
                       secureTextEntry
                       />
                       <View style={styles.signUpBlock}>
                         <Text style={{color: '#5C5C5C', ...styles.signUpText}}>Não tem uma conta?</Text>
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={()=> this.props.navigation.navigate("SignUp")}>
                             <Text style={{color: '#2576C1', ...styles.signUpText}}> Registrar</Text>
                         </TouchableOpacity>
                       </View>
-                      <TouchableOpacity style={styles.signInButton}>
+                      <TouchableOpacity 
+                      style={styles.signInButton} 
+                      onPress={() => this.handleLogin()}>
                             <Text style={styles.signInText}>Entrar</Text>
                       </TouchableOpacity>
                     </View>

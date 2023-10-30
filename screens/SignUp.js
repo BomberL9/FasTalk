@@ -14,7 +14,8 @@ import {
     Dimensions 
 } from 'react-native';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../config';
+import { collection, addDoc } from 'firebase/firestore';
+import { auth, db } from '../config';
 
 const background = require('../assets/background.png');
 const logo = require('../assets/logo.png');
@@ -24,20 +25,21 @@ export default class SignUp extends Component{
         super(props);
         this.state = {
           email: "",
-          password: ""
+          password: "",
+          username: ""
         };
     }
 
     handleLogin = () => {
-      const { email, password } = this.state;
-
+      const { email, password, username } = this.state;
       createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) => {
-        const user = userCredential.user;
-        console.log(user);
-
+      .then(() => {
         Alert.alert("Conta criada com sucesso!");
         this.props.navigation.navigate("Login");
+        addDoc(collection(db, "users"), {
+          user_email: this.state.email,
+          username: this.state.username
+        });
       })
       .catch(err => {
         console.log(err.message);
@@ -54,6 +56,13 @@ export default class SignUp extends Component{
                       <Text style={styles.title}>Criar Conta</Text>
                     </View>
                     <View style={styles.lowerContainer}>
+                      <TextInput
+                      style={styles.textInput}
+                      placeholder='Insira seu nome de usuário'
+                      placeholderTextColor='#5C5C5C'
+                      onChangeText={text => this.setState({username: text})}
+                      autoFocus
+                      />
                       <TextInput
                       style={styles.textInput}
                       placeholder='Insira seu endereço de email'
@@ -78,7 +87,7 @@ export default class SignUp extends Component{
                       <TouchableOpacity 
                       style={styles.signInButton} 
                       onPress={() => this.handleLogin()}>
-                            <Text style={styles.signInText}>Criar conta</Text>
+                            <Text style={styles.signInText}>Criar</Text>
                       </TouchableOpacity>
                     </View>
                 </ImageBackground>
@@ -103,12 +112,12 @@ const styles = StyleSheet.create({
         height: Dimensions.get('window').height
     },
     upperContainer:{
-      flex: 0.5,
+      flex: 0.4,
       alignItems: 'center',
       justifyContent: 'center',
     },
     lowerContainer:{
-        flex: 0.5,
+        flex: 0.6,
     },
     logo:{
       width: 100,
