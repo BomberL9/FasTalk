@@ -14,7 +14,7 @@ import {
   Alert, 
   KeyboardAvoidingView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { collection, addDoc, Timestamp, query, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, query, where, getDocs, doc } from 'firebase/firestore';
 import { auth, db } from '../config';
 
 const background = require('../assets/background.png');
@@ -25,7 +25,8 @@ export default class Chat extends Component {
     this.state = {
       selectedUser: props.route.params.selectedUser,
       messageText: "",
-      loggedUser: []
+      loggedUser: [],
+      allMessages: []
     };
   }
   
@@ -45,6 +46,7 @@ export default class Chat extends Component {
           const userData = doc.data();
           this.setState({loggedUser: userData});
           console.log("Dados do usuário logado:", userData);
+          this.getMessages();
         });
       }
     }catch(error){
@@ -65,25 +67,39 @@ export default class Chat extends Component {
       });
       this.setState({messageText: ""});
     }
-    console.info(this.state.allMessages);
   };
 
-  renderItem = async({item, i}) => {
+  getMessages = async() => {
+    const { selectedUser, loggedUser } = this.state;
+    const senderUsername = loggedUser.username;
+    const receiverUsername = selectedUser.username;
+    const messagesRef = collection(db, "messages");
+    const q = query(
+      messagesRef,
+      where('sender', '==', senderUsername),
+      where('receiver', '==', receiverUsername)
+    );
+    const querySnapshot = await getDocs(q);
+    if(!querySnapshot.empty){
+      querySnapshot.docs.forEach((doc) => {
+        const messages = doc.data();
+        this.setState({ allMessages: messages });
+      })
+    }
+  };
+
+  renderItem = ({item, i}) => {
+    const { allMessages } = this.state;
     console.log(item);
     return(
-      <View style={styles.message}>
+      <View>
         <Text>{item.sender}</Text>
         <Text>{item.message}</Text>
       </View>
     );
   };
 
-  keyExtractor = (item, index) => {
-    index.toString();
-  }
-
   render() {
-    const { allMessages } = this.state;
     return (
       <KeyboardAvoidingView 
       style={styles.container} 
@@ -101,9 +117,9 @@ export default class Chat extends Component {
           </View>
           <View style={styles.chatView}>
             <FlatList
-            data={allMessages}
+            data={this.state.allMessages}
             renderItem={this.renderItem}
-            keyExtractor={this.keyExtractor}
+            keyExtractor={(item) => (item && item.id) ? item.id.toString() : Math.random().toString()}
             />
           </View>
           <View style={styles.bottomBlock}>
@@ -169,6 +185,6 @@ const styles = StyleSheet.create({
     alignItems: 'center'
   },
   message:{
-
+    backgroundColor: '#fff',
   }
 })
