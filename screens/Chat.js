@@ -14,7 +14,7 @@ import {
   Alert, 
   KeyboardAvoidingView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { collection, addDoc, Timestamp, query, where, getDocs, doc } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, query, where, getDocs, doc, orderBy } from 'firebase/firestore';
 import { auth, db } from '../config';
 
 const background = require('../assets/background.png');
@@ -71,30 +71,27 @@ export default class Chat extends Component {
 
   getMessages = async() => {
     const { selectedUser, loggedUser } = this.state;
-    const senderUsername = loggedUser.username;
-    const receiverUsername = selectedUser.username;
     const messagesRef = collection(db, "messages");
     const q = query(
       messagesRef,
-      where('sender', '==', senderUsername),
-      where('receiver', '==', receiverUsername)
+      where('sender', '==', loggedUser.username),
+      where('receiver', '==', selectedUser.username),
+      orderBy('date', 'asc')
     );
+  
     const querySnapshot = await getDocs(q);
-    if(!querySnapshot.empty){
-      querySnapshot.docs.forEach((doc) => {
-        const messages = doc.data();
-        this.setState({ allMessages: messages });
-      })
+    if (!querySnapshot.empty) {
+      const messages = querySnapshot.docs.map(doc => doc.data().message);
+      this.setState(prevState => ({
+        allMessages: [...prevState.allMessages, ...messages],
+      }));
     }
   };
 
   renderItem = ({item, i}) => {
-    const { allMessages } = this.state;
-    console.log(item);
     return(
-      <View>
-        <Text>{item.sender}</Text>
-        <Text>{item.message}</Text>
+      <View style={styles.message}>
+        <Text style={{fontFamily: 'Font'}}>{item}</Text>
       </View>
     );
   };
@@ -186,5 +183,10 @@ const styles = StyleSheet.create({
   },
   message:{
     backgroundColor: '#fff',
+    marginLeft: 20,
+    marginTop: 30,
+    padding: 20,
+    alignSelf: 'flex-start',
+    borderRadius: 20,
   }
 })
