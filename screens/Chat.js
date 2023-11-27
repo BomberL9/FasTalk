@@ -14,7 +14,7 @@ import {
   Alert, 
   KeyboardAvoidingView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { collection, addDoc, Timestamp, query, where, getDocs, doc, orderBy } from 'firebase/firestore';
+import { collection, addDoc, Timestamp, query, where, getDocs, orderBy } from 'firebase/firestore';
 import { auth, db } from '../config';
 
 const background = require('../assets/background.png');
